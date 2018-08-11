@@ -1,0 +1,226 @@
+\documentclass[10pt,letterpaper,final]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{leftidx}
+\usepackage{graphicx}
+\usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\author{Tanishq Aggarwal}
+\title{Dynamics and Control Theory of a Dual-Coaxial Rotor Helicopter}
+\date{}
+\begin{document}
+\maketitle
+\section{Introduction}
+One of the most common configurations often seen for radio-controlled helicopters is the dual-coaxial rotor configuration. This setup is common because of the ease of control of such a helicopter; the dual-rotor configuration provides rotational stability, and lends itself to easy mechanical maneuverability, since a swashplate mechanism does not need to be implemented for changing rotor pitch. Instead, the thrust vector can be controlled via the tail rotor, and attitude via differential control of the main rotors.
+
+Due to the simplicity, low cost, and abundance of these devices, it is worth exploring how to control them. This paper presents a dynamics model for such a vehicle, and explores optimum control patterns for stable flight and planned trajectory conformance.
+
+\section{Initial Conditions, Setup, and Frames of Reference}
+We will be working in two \textit{main} frames and coordinate systems. 
+\begin{enumerate}
+\item The body frame $B$ of the copter, whose axes are defined such that the $y$ axis is parallel with the main boom of the helicopter, the $z$ axis is parallel to the rotor axis, and the $x$ axis completes a right-handed triad. The origin of our coordinate system is the helicopter's center of mass. We define rotor A's center to be $\bm{r}_A$, rotor B's center to be $\bm{r}_B$, and the tail rotor's center to be $\bm{r}_T$. 
+\item The inertial frame $N$, i.e. the "world frame", which shares an origin with the body frame at time $t = 0$. 
+\end{enumerate}
+We will also be using some other frames for derivations:
+\begin{enumerate}
+\item The principal frame of a rotor blade for rotor $X$, $P_{R_X}$. In this frame the $x$-axis points down the pitch of the blade, the $y$-axis from the center of the rotor towards the edge, and the $z$-axis that completes the right-handed triad.
+\item The frame of rotor $X$, denoted $R_X$. This frame shares its $y$-axis with the principal frames of its rotor blades, but its $z$-axis is shared with the body-frame's $z$-axis, and the $x$-axis completes the right-handed triad. At time $t = 0$, all rotor frames coincide with the body frame (i.e. the rotors are parallel to the boom of the helicopter).
+\end{enumerate}
+
+In this paper, we will use the following notations:
+\begin{itemize}
+\item $\hat{x}_A, \hat{y}_A, \hat{z}_A$ to notate the basis vectors for a chosen coordinate system for a frame $A$.
+\item ${}^X Q^Y$ to denote a transformation matrix from frame $Y$ to frame $X$. For example, ${}^N Q^B \bm v$ transforms a body-coordinate representation of vector $\bm v$ into a inertial-coordinate representation of $\bm v$.
+\item $(v)_x$ to represent the $x$-component of vector $\bm v$.
+\end{itemize}
+
+\section{The State and Control Vectors}
+The system allows us three control inputs: the angular speeds of the three rotors, $\omega_A$, $\omega_B$, and $\omega_T$. For the sake of simplicity, we will assume that these three speeds correspond directly to thrust force outputs $F_A, F_B$, and $F_T$. That is to say, we define our control input vector $\bm u$ to be
+\begin{equation}
+\bm u = \bm \kappa \cdot \bm \Omega
+\end{equation}
+where $\bm u = [F_A \ F_B \ F_T]^T$, $\bm \Omega = [\omega_A \ \omega_B \ \omega_T]^T$, and $\bm \kappa$ is a constant that scales each angular speed to a scalar thrust value.
+
+Our state vector is a little bit more complicated. We care about the orientation of the body frame with respect to the normal frame ($^B Q^N$), the time-derivative of this orientation ($^B \bm \omega^N$), the position of the copter's center-of-mass with respect to the origin of the inertial frame ($\bm{x}_{CM}$), and the time-derivative of this position ($\bm{v}_{CM}$).
+
+\section{Models}
+\subsection{Body}
+We exclude the rotors from our conception of the body, and we make the (very reasonable) assumption that the body is symmetric across the $yz$-plane. Thus, many terms drop out of the body's inertia tensor\footnote{This inertia tensor is defined in the body frame with respect to the body's CM.}:
+\begin{equation}
+J_H =
+\begin{bmatrix}
+\int y^2 + z^2 \ dm & 0 & 0 \\ 
+0 & \int x^2 + z^2 \ dm & -\int yz \ dm \\ 
+0 & -\int yz \ dm & \int x^2 + y^2 \ dm  \\ 
+\end{bmatrix}
+\end{equation}
+Now the body's angular momentum is just $\bm L_H = J_H \bm\omega_H$, where $\bm \omega_H$ is the angular velocity of the body.
+
+Let us take a deeper look at this vector $\bm \omega_H$. The helicopter can either pitch (when the tail rotor is applied) or yaw (when the main rotors are differentially controlled.) So
+$$\bm \omega_H = (\omega_{H})_x \hat{x}_B + (\omega_{H})_z \hat{z}_B$$
+The precise values of these two components can be determined through the equation of motion.
+\subsection{Rotor}
+For simplicity, we model each rotor as a set of two rectangular blades, each of length $l$, width $w$, and (negligible) thickness $t$, attached by a corner to the central pivot point at an angle $\phi$. The inertia tensor for a thin rectangular plate around the plate's center, as defined in the plate's principal-axis coordinate system, is
+$$(J_{blade})_{P_{R_X}} = \frac{M_R}{2 \cdot 12}
+\begin{bmatrix}
+l^2  & 0 & 0 \\
+0 & w^2 & 0 \\
+0 & 0 & w^2 + l^2 \\
+\end{bmatrix}
+$$
+where $M_R$ is the mass of the entire rotor. We need to translate this matrix, via parallel-axis, to be with respect to the rotor's center. This is done via the parallel-axis theorem:
+\begin{align*}
+(J_{blade})_{P_{R_X}, translated} &= 
+\frac{M_R}{24} \begin{bmatrix}
+l^2  & 0 & 0 \\
+0 & w^2 & 0 \\
+0 & 0 & w^2 + l^2 \\
+\end{bmatrix} + 
+\frac{M_R}{2} \begin{bmatrix}
+(l/2)^2  & -(w/2)(l/2) & 0 \\
+-(w/2)(l/2) & (w/2)^2 &  -(w/2)(l/2) \\
+0 & 0 & (w/2)^2 + (l/2)^2 \\
+\end{bmatrix} \\
+&= 
+\frac{M_R}{2} \begin{bmatrix}
+\frac{1}{3}l^2 & -wl/4 & 0 \\
+-wl/4 & \frac{1}{3}w^2 & -wl/4 \\
+0 & 0 & \frac{1}{3}(w^2 + l^2) \\
+\end{bmatrix}
+\end{align*}
+We've only derived this result for one of the blades, but the result for the other blade is exactly the same, since all that we do is replace $l$ and $w$ by $-l$ and $-w$, which doesn't change the overall sign of any terms in the matrix.
+
+We now need to translate this result from the blade frame to the rotor frame. In this case, the transformations \textit{are} different for each blade. The transformation for the blade whose $y$-axis is parallel to the rotor's $y$-axis is
+$$
+^{R_X}Q^\text{blade 1} = \begin{bmatrix}
+\cos\phi & 0 & \sin\phi \\
+0 & 1 & 0 \\
+-\sin\phi & 0 & \cos\phi \\
+\end{bmatrix}
+$$
+but the transformation for the blade whose $y$-axis is antiparallel to the rotor's $y$-axis is
+$$
+^{R_X}Q^\text{blade 2} = \begin{bmatrix}
+-\cos\phi & 0 & -\sin\phi \\
+0 & -1 & 0 \\
+-\sin\phi & 0 & \cos\phi \\
+\end{bmatrix}
+$$
+So the results we get for the inertia tensors for both blades when transforming to the rotor frame are also slightly different:
+\begin{align*}
+(J_\text{blade 1})_{R_X} &= {}^{R_X}Q^\text{blade 1} (I_{blade})_{P_{R_X}, translated} \\
+&= 
+\frac{M_R}{2} \begin{bmatrix}
+\frac{1}{3} l^2 \cos\phi & -wl\cos\phi/4 & \frac{1}{3}(w^2 + l^2)\sin\phi \\
+-wl/4 & \frac{1}{3}w^2 & -wl/4 \\
+-\frac{1}{3}l^2 \sin\phi & wl\sin\phi/4 & \frac{1}{3}(w^2 + l^2)\cos\phi \\
+\end{bmatrix}
+\end{align*}
+and
+\begin{align*}
+(J_\text{blade 2})_{R_X} &= {}^{R_X}Q^\text{blade 2} (I_{blade})_{P_{R_X}, translated} \\
+&= 
+\frac{M_R}{2} \begin{bmatrix}
+-\frac{1}{3} l^2 \cos\phi & wl\cos\phi/4 & -\frac{1}{3}(w^2 + l^2)\sin\phi \\
+wl/4 & -\frac{1}{3}w^2 & wl/4 \\
+-\frac{1}{3}l^2 \sin\phi & wl\sin\phi/4 & \frac{1}{3}(w^2 + l^2)\cos\phi \\
+\end{bmatrix}
+\end{align*}
+We sum the inertias of the two blades to find
+$$(J_{rotor})_{R_X} = M_R \begin{bmatrix}
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+-\frac{1}{3}l^2 \sin\phi & wl\sin\phi/4 & \frac{1}{3}(w^2 + l^2)\cos\phi \\
+\end{bmatrix}
+$$
+Let us pause for a moment to consider this result. Notice that the eigenvectors of this matrix have only a $z$-component. So this means the only ``natural" rotation allowed in the rotor frame is one around the $z$-axis--which is intuitively true. So this form for the inertia, even though it is starkly simple compared to what we had before, makes sense.
+
+In order to express all rotations in a common language, we will need to translate this matrix once more to the body frame. Suppose that the location of the rotor's center with respect to the CM, in body coordinates, is $[0 \ y_R \ z_R]^T$. Then\footnote{Note that we have implicitly assumed that the rotors are positioned on the body's septum in order to set $x = 0$. Obviously, this assumption is pretty reasonable.}
+$$(J_{rotor})_B = M_R \begin{bmatrix}
+y_R^2 + z_R^2 & 0 & 0 \\
+0 & z_R^2 & -y_Rz_R \\
+0 & -y_Rz_R & y_R^2 \\
+\end{bmatrix} + {}^BQ^{R_X} (J_{rotor})_{R_X}
+$$
+where $^BQ^R $ is the rotation matrix that converts from the rotor frame to the body frame:
+$$
+^BQ^R = \begin{bmatrix}
+\cos\theta_R & -\sin\theta_R & 0 \\
+\sin\theta_R & \cos\theta_R & 0 \\
+0 & 0 & 1 \\
+\end{bmatrix}
+$$
+where $\theta_R$ is the (clockwise) angle that is made between the rotor frame's $x$ axis and the body frame's $x$ axis. Notice, however, that $^BQ^R (J_{rotor})_{R_X} = (J_{rotor})_{R_X}$, so in fact the angle-dependence of the inertia drops out\footnote{This is an astonishing result! One would expect that the inertia of the rotor might have some angle-dependence since the rotor is rotating with respect to the body, but apparently not. The result seems correct, but I'm at a loss for how to explain why.}, and so the rotation matrix is unnecessary.
+
+The final expression for the rotor angular momentum becomes
+\begin{equation}
+\bm{L}_{r} = (J_{rotor})_B \omega_{r} \hat{z}_B
+\end{equation}
+
+\section{Equations of Motion}
+\subsection{Translational}
+There are four forces that act on the copter: the three rotors' thrusts, and gravity. So Newton's second law for the system, in the inertial frame, becomes
+\begin{equation}
+M \left (\frac{d^2\bm{x}_{CM}}{dt^2} \right)_N = (F_A + F_B + F_T)(^N Q^B \hat{z}_B) - Mg\hat{z}_N
+\end{equation}
+The derivative on the left-hand side is taken in the normal frame, as indicated by the subscript. We will rewrite this in the slightly more useful form
+\begin{equation}
+M \frac{d^2\bm{x}_{CM}}{dt^2} = (^N Q^B \hat{z}_B)([1 \ 1 \ 1]) \bm{u} - Mg\hat{z}_N
+\end{equation}
+with $\bm u$ as defined in the previous section.
+
+\subsection{Rotational}
+There are seven `natural` sources of angular momentum in this system. The three most obvious ones are the angular momenta of the rotors, around their pivot points. The fourth is the angular momentum of the body itself, around its center of mass. The final three are the gyroscopic angular momenta of the rotors around the center of mass, i.e. the angular momenta of the rotors due to the rotation of the \textit{body}.
+
+Thus, the total angular momentum, in the body frame, is
+\begin{align*}
+\bm L &= \bm L_H + \bm L_A + \bm L_B + \bm L_T + \bm L_{gyro A} + \bm L_{gyro B} + \bm L_{gyro T} \\
+&= J_H (\omega_H)_x \hat{x}_B + J_H (\omega_H)_z \hat{z}_B +  (J_A \omega_A + J_B \omega_B + J_T \omega_T) \hat{z}_B + (J_A + J_B + J_T) ((\omega_H)_x \hat{x}_B + (\omega_H)_z \hat{z}_B)
+\end{align*}
+where $J_A$, $J_B$, $J_T$ are the inertia tensors of the three rotors in the body frame. (This is a slight departure from the notation used in section 4.1, for convenience's sake.)
+
+The torque equation, written for the \textit{body frame} around the center of mass, comes from the three torques due to rotor thrust
+\begin{align}
+\left (\frac{d\bm{L}}{dt} \right)_B &= \bm{r}_A \times \bm{F}_A  +  \bm{r}_B \times \bm{F}_B +  \bm{r}_T \times \bm{F}_T \\
+&= F_A \bm{r}_A \times \hat{z}_B  +  F_B \bm{r}_B \times \hat{z}_B +  F_T \bm{r}_T \times \hat{z}_B \nonumber \\
+&= (F_A \bm{r}_A  +  F_B \bm{r}_B +  F_T \bm{r}_T) \times \hat{z}_B \nonumber \\
+&= \bm u^T [(r_A)_y \ (r_B)_y \ (r_T)_y]^T \hat{x}_B
+\end{align}
+But also, defining $J \equiv J_H + J_A + J_B + J_T$ (i.e. the total inertia around the CM in the body frame), we have
+$$\left (\frac{d\bm{L}}{dt} \right)_B  = J \frac{d(\omega_H)_x}{dt} \hat{x}_B + J \frac{d(\omega_H)_z}{dt} \hat{z}_B +  (J_A (\omega_A + (\omega_H)_z) + J_B (\omega_B + (\omega_H)_z) + J_T (\omega_T + (\omega_H)_z)) \hat{z}_B$$
+So we can combine our two expressions for change in angular momentum to get
+$$J \frac{d(\omega_H)_x}{dt} \hat{x}_B + J \frac{d(\omega_H)_z}{dt} \hat{z}_B +  (J_A (\omega_A + (\omega_H)_z) + J_B (\omega_B + (\omega_H)_z) + J_T (\omega_T + (\omega_H)_z)) \hat{z}_B = \bm u^T [(r_A)_y \ (r_B)_y \ (r_T)_y]^T \hat{x}_B$$
+$$J \frac{d(\omega_H)_x}{dt} \hat{x}_B + J \frac{d(\omega_H)_z}{dt} \hat{z}_B  = \bm u^T [(r_A)_y \ (r_B)_y \ (r_T)_y]^T \hat{x}_B - (J_A (\omega_A + (\omega_H)_z) + J_B (\omega_B + (\omega_H)_z) + J_T (\omega_T + (\omega_H)_z)) \hat{z}_B$$
+This results in the two equations
+$$J \frac{d(\omega_H)_x}{dt} \hat{x}_B  = I_3 (\bm u^T [(r_A)_y \ (r_B)_y \ (r_T)_y]^T) \hat{x}_B$$
+$$J \frac{d(\omega_H)_z}{dt} \hat{z}_B  = - (J_A (\omega_A + (\omega_H)_z) + J_B (\omega_B + (\omega_H)_z) + J_T (\omega_T + (\omega_H)_z)) \hat{z}_B$$
+where $I_3$ is the 3x3 identity matrix. The first equation describes the pitch of the helicopter, and the second equation describes yaw.
+
+\subsection{Relationship of Body and Inertial Frame}
+The body and inertial frames coincide at time $t = 0$. Suppose, at time $t$, that the body has rotated through an angle $\gamma$ through its $z$-axis, and an angle $\mu$ around the $x$ axis. The transformation from the body frame to the inertial frame becomes
+$${}^N Q^B = 
+\begin{bmatrix}
+\cos\gamma & -\sin\gamma & 0 \\
+\sin\gamma & \cos\gamma & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\mu & -\sin\mu \\
+0 & \sin\mu & \cos\mu
+\end{bmatrix}
+=
+\begin{bmatrix}
+\cos\gamma & -\sin\gamma\cos\mu & \sin\gamma\sin\mu \\
+\sin\gamma & \cos\gamma\cos\mu & -\sin\mu\cos\gamma \\
+0 & \sin\mu & \cos\mu
+\end{bmatrix}$$
+
+
+We have thus obtained our equations of motion, but as you can see, they are all highly nonlinear. The purpose of the remainder of this paper is to coax linearities out of these equations in order to extract control authority.
+
+\section{The State Transition Matrix}
+
+\end{document}
