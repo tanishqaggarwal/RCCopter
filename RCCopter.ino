@@ -10,6 +10,7 @@
 #include <MPU9150.h>
 #include <NMEAGPS.h>
 #include <RF24.h>
+#include <COBS.h>
 
 #define ROTOR_A_PIN 9
 #define ROTOR_B_PIN 10
@@ -38,5 +39,5 @@ void setup() {
 }
 
 void loop() {
-    
+
 }
