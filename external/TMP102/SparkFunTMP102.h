@@ -80,5 +80,4 @@ class TMP102
 		byte readRegister(bool registerNumber);	// reads 1 byte of from register
 };
 
-
 #endif

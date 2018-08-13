@@ -21,7 +21,9 @@ Distributed as-is; no warranty is given.
 #ifndef __SparkFunMAX17043_H__
 #define __SparkFunMAX17043_H__
 
-#include "application.h"
+#include <stdint.h>
+#include <Arduino.h>
+#include <Wire.h>
 
 class MAX17043
 {

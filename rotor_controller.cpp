@@ -22,9 +22,9 @@ void RotorController::setSpeeds(uint8_t speedA, uint8_t speedB, uint8_t speedTai
     Aspeed = speedA;
     Bspeed = speedB;
     tailSpeed = speedTail;
-    analogWrite(rotorA, convertSpeed(speedA));
-    analogWrite(rotorB, convertSpeed(speedB));
-    analogWrite(tailRotor, convertSpeed(speedTail));
+    analogWrite(rotorA, speedA);
+    analogWrite(rotorB, speedB);
+    analogWrite(tailRotor, speedTail);
 }
 
 void RotorController::setTailRotorSpeed(uint8_t s) {
@@ -41,8 +41,4 @@ void RotorController::setMainRotorSpeed(uint8_t s) {
 
 void RotorController::rotateClockwiseALeading(uint8_t s, uint8_t rrate) {
     setSpeeds(s, s - rrate, 0);
-}
-
-uint8_t RotorController::convertSpeed(uint8_t s) {
-    return (s * 255 / 100);
 }

@@ -237,6 +237,3 @@ uint16_t MAX17043::read16(uint8_t address)
 
   return ((uint16_t) msb << 8) | lsb;
 }
-
-// Define a static MAX17043 object called lipo, which we'll use in the sketches.
-MAX17043 lipo;
